@@ -103,7 +103,7 @@ if __name__ == '__main__':
         f.write(str(time.time() - start))
 
     # deduplicate for raw data
-    cmd = 'python extract.py deduplicate -i %s -o %s' % (
+    cmd = 'python ../extract.py deduplicate -i %s -o %s' % (
         os.path.join(args.out_dir, 'raw'),
         os.path.join(args.out_dir, 'deduplicated'),
     )

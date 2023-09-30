@@ -1,0 +1,7 @@
+/venv/
+/.scrapy/
+/test/data/
+*.pyc
+.idea
+/test/tmp.json
+/test/using_time

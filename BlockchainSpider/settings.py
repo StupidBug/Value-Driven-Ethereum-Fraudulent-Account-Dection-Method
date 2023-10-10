@@ -53,7 +53,8 @@ DEFAULT_REQUEST_HEADERS = {
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'BlockchainSpider.middlewares.RequestCacheMiddleware': 901,
+    'BlockchainSpider.middlewares.RequestCacheMiddleware': 0,
+    'scrapy.downloadermiddlewares.httpcache.HttpCacheMiddleware': None,
 }
 
 # Enable or disable extensions
@@ -86,6 +87,7 @@ HTTPCACHE_ENABLED = True
 HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = './cache'
 HTTPCACHE_IGNORE_HTTP_CODES = []
+HTTPCACHE_POLICY = 'BlockchainSpider.extensions.cache.CachePolicy'
 HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 HTTPCACHE_GZIP = True
 

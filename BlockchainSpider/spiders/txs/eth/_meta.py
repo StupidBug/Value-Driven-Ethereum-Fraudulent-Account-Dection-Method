@@ -71,7 +71,7 @@ class TxsETHSpider(scrapy.Spider):
         self.symbols = set(self.symbols.split(',')) if self.symbols else self.symbols
         self.info['symbols'] = self.symbols
 
-        self.max_retry = 2
+        self.max_retry = 5
 
     def load_task_info_from_json(self, fn: str):
         infos = list()
@@ -111,8 +111,6 @@ class TxsETHSpider(scrapy.Spider):
             'endblock': min(kwargs.get('endblock', self.end_blk), self.end_blk),
             'apikey': self.apikey_bucket.get()
         }
-        if kwargs.get('retry') is not None:
-            query_params['retry'] = kwargs['retry']
         return scrapy.Request(
             url=QueryURLBuilder(self.TXS_API_URL).get(query_params),
             method='GET',
@@ -134,8 +132,6 @@ class TxsETHSpider(scrapy.Spider):
             'endblock': min(kwargs.get('endblock', self.end_blk), self.end_blk),
             'apikey': self.apikey_bucket.get()
         }
-        if kwargs.get('retry') is not None:
-            query_params['retry'] = kwargs['retry']
         return scrapy.Request(
             url=QueryURLBuilder(self.TXS_API_URL).get(query_params),
             method='GET',
@@ -157,8 +153,6 @@ class TxsETHSpider(scrapy.Spider):
             'endblock': min(kwargs.get('endblock', self.end_blk), self.end_blk),
             'apikey': self.apikey_bucket.get()
         }
-        if kwargs.get('retry') is not None:
-            query_params['retry'] = kwargs['retry']
         return scrapy.Request(
             url=QueryURLBuilder(self.TXS_API_URL).get(query_params),
             method='GET',
@@ -180,8 +174,6 @@ class TxsETHSpider(scrapy.Spider):
             'endblock': min(kwargs.get('endblock', self.end_blk), self.end_blk),
             'apikey': self.apikey_bucket.get()
         }
-        if kwargs.get('retry') is not None:
-            query_params['retry'] = kwargs['retry']
         return scrapy.Request(
             url=QueryURLBuilder(self.TXS_API_URL).get(query_params),
             method='GET',
@@ -203,6 +195,10 @@ class TxsETHSpider(scrapy.Spider):
         if isinstance(data.get('result'), list):
             txs = list()
             for tx in data['result']:
+                is_error = data.get('isError', 0)
+                txreceipt_status = data.get('txreceipt_status', 1)
+                if is_error == 1 or txreceipt_status == 0:
+                    continue
                 if tx['from'] == '' or tx['to'] == '':
                     continue
                 tx['value'] = int(tx.get('value', 1))

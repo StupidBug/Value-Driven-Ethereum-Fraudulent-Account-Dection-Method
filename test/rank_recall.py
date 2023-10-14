@@ -60,7 +60,7 @@ if __name__ == '__main__':
         ranks[legends[i]] = dict()
         for source in cases.keys():
             rank = list()
-            fn = os.path.join(path, '%s.csv' % source)
+            fn = os.path.join(path, 'importance', '%s.csv' % source)
             with open(fn, 'r') as f:
                 reader = csv.reader(f)
                 _ = next(reader)

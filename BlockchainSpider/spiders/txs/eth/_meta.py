@@ -71,7 +71,7 @@ class TxsETHSpider(scrapy.Spider):
         self.symbols = set(self.symbols.split(',')) if self.symbols else self.symbols
         self.info['symbols'] = self.symbols
 
-        self.max_retry = 5
+        self.max_retry = 2
 
     def load_task_info_from_json(self, fn: str):
         infos = list()

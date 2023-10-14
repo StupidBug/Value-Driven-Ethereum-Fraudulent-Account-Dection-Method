@@ -9,11 +9,11 @@ class SyncSubgraphTask(SubgraphTask):
         self._cache = list()
         self._mux = 0
 
-    def wait(self):
+    def wait(self, wait_num: int = 1):
         if self.is_closed:
             return
 
-        self._mux -= 1
+        self._mux -= wait_num
 
     def push(self, node, edges: list, **kwargs):
         if self.is_closed:

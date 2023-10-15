@@ -1,3 +1,4 @@
+import json
 import logging
 
 from BlockchainSpider import strategies
@@ -109,6 +110,10 @@ class TxsETHTTRSpider(TxsETHSpider):
     def error_process(self, func_txs_type_request, response, **kwargs):
         tid = kwargs['task_id']
         task: SpiderTask = self.task_map[tid]
+        error_message = json.loads(response.text)["message"]
+        if error_message == "Query Timeout occured. Please select a smaller result dataset":
+            yield from self.generate_binary_request(func_txs_type_request, task, **kwargs)
+            return
 
         kwargs['retry'] = kwargs.get('retry', 0) + 1
         # retry if less than max retry count
@@ -129,6 +134,29 @@ class TxsETHTTRSpider(TxsETHSpider):
         item = task.fuse(kwargs['address'])
         if item is not None:
             yield from self.generate_extend_request(item, task, tid)
+
+    @staticmethod
+    def generate_binary_request(func_txs_type_request, task, **kwargs):
+        task.wait()
+        mid_block = (int(kwargs['startblock']) + int(kwargs['endblock'])) // 2
+        yield func_txs_type_request(
+            address=kwargs['address'],
+            **{
+                'startblock': kwargs['startblock'],
+                'endblock': mid_block,
+                'residual': kwargs['residual'],
+                'task_id': kwargs['task_id']
+            }
+        )
+        yield func_txs_type_request(
+            address=kwargs['address'],
+            **{
+                'startblock': mid_block,
+                'endblock': kwargs['endblock'],
+                'residual': kwargs['residual'],
+                'task_id': kwargs['task_id']
+            }
+        )
 
     def generate_next_request(self, func_txs_type_request, txs, task, **kwargs):
         task.wait()

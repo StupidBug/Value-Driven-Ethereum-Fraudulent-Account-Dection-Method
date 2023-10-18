@@ -71,7 +71,7 @@ class TxsETHSpider(scrapy.Spider):
         self.symbols = set(self.symbols.split(',')) if self.symbols else self.symbols
         self.info['symbols'] = self.symbols
 
-        self.max_retry = 2
+        self.max_retry = 5
 
     def load_task_info_from_json(self, fn: str):
         infos = list()
@@ -189,27 +189,28 @@ class TxsETHSpider(scrapy.Spider):
         for txs_type in self.txs_types:
             yield self.txs_req_getter[txs_type](address, **kwargs)
 
-    def load_txs_from_response(self, response):
+    def load_txs_from_response(self, response, **kwargs):
         data = json.loads(response.text)
         txs = None
         if isinstance(data.get('result'), list):
             txs = list()
             for tx in data['result']:
-                is_error = data.get('isError', 0)
-                txreceipt_status = data.get('txreceipt_status', 1)
-                if is_error == 1 or txreceipt_status == 0:
+
+                # validity check
+                if data.get('isError', 0) == 1 or data.get('txreceipt_status', 1) == 0:
                     continue
                 if tx['from'] == '' or tx['to'] == '':
                     continue
-                tx['value'] = int(tx.get('value', 1))
-                tx['timeStamp'] = int(tx['timeStamp'])
-
+                if not (kwargs['startblock'] < int(tx['blockNumber']) < kwargs['endblock']):
+                    continue
                 if self.symbols and tx.get('tokenSymbol', 'native') not in self.symbols:
                     continue
+
+                tx['value'] = int(tx.get('value', 1))
+                tx['timeStamp'] = int(tx['timeStamp'])
                 tx['symbol'] = '{}_{}'.format(tx.get('tokenSymbol', 'native'), tx.get('contractAddress'))
                 if tx.get('tokenID') is not None:
                     tx['symbol'] = '{}_{}'.format(tx['symbol'], tx['tokenID'])
-
                 tx['id'] = '{}_{}_{}'.format(tx.get('hash'), tx.get('traceId'), tx['symbol'])
                 txs.append(tx)
         return txs

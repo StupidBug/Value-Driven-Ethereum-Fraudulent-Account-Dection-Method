@@ -9,7 +9,7 @@ from BlockchainSpider.tasks import SyncSubgraphTask
 
 class TxsETHTTRSpider(TxsETHSpider):
     name = 'txs.eth.ttr'
-    allow_strategies = {'TTRBase', 'TTRWeight', 'TTRTime', 'TTRRedirect'}
+    allow_strategies = {'TTRBase', 'TTRWeight', 'TTRTime', 'TTRRedirect', 'TTRPrice'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -70,7 +70,7 @@ class TxsETHTTRSpider(TxsETHSpider):
 
     def _proess_response(self, response, func_txs_type_request, **kwargs):
         # parse data from response and handle error
-        txs = self.load_txs_from_response(response)
+        txs = self.load_txs_from_response(response, **kwargs)
         if txs is None:
             yield from self.error_process(func_txs_type_request, response, **kwargs)
         else:
@@ -111,8 +111,12 @@ class TxsETHTTRSpider(TxsETHSpider):
         tid = kwargs['task_id']
         task: SpiderTask = self.task_map[tid]
         error_message = json.loads(response.text)["message"]
+
         if error_message == "Query Timeout occured. Please select a smaller result dataset":
             yield from self.generate_binary_request(func_txs_type_request, task, **kwargs)
+            return
+        if error_message == "Max rate limit reached":
+            yield from self.generate_retry_request(func_txs_type_request, **kwargs)
             return
 
         kwargs['retry'] = kwargs.get('retry', 0) + 1

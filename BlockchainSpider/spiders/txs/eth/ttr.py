@@ -9,7 +9,7 @@ from BlockchainSpider.tasks import SyncSubgraphTask
 
 class TxsETHTTRSpider(TxsETHSpider):
     name = 'txs.eth.ttr'
-    allow_strategies = {'TTRBase', 'TTRWeight', 'TTRTime', 'TTRRedirect', 'TTRPrice'}
+    allow_strategies = {'TTRBase', 'TTRWeight', 'TTRTime', 'TTRRedirect', 'TTRPrice', 'TTRAlpha'}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

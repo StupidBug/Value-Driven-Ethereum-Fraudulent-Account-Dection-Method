@@ -1434,7 +1434,8 @@ class TTRAlpha(TTR):
             self._vis.add(self.source)
 
             # calc value of each symbol
-            symbols = set()
+            symbols_in = set()
+            symbols_out = set()
 
             edge_weight = dict()
             for e in edges:
@@ -1457,16 +1458,15 @@ class TTRAlpha(TTR):
                         print(value)
                 else:
                     edge_weight[str(e)] = 0
-                symbols.add(e.get('symbol'))
-            self.total_weight = len(symbols) * 2
-            sum_weight = sum(edge_weight.values())
-            for key in edge_weight.keys():
-                edge_weight[key] = edge_weight[key] / sum_weight * len(symbols) * 2
+                if e.get('to') == self.source:
+                    symbols_in.add(e.get('symbol'))
+                elif e.get('from') == self.source:
+                    symbols_out.add(e.get('symbol'))
 
-                # if e.get('to') == self.source:
-                #     in_sum[e.get('hash')] = in_sum.get(e.get('symbol'), 0) + e.get('value', 0)
-                # elif e.get('from') == self.source:
-                #     out_sum[e.get('hash')] = out_sum.get(e.get('symbol'), 0) + e.get('value', 0)
+            sum_weight = sum(edge_weight.values())
+            self.total_weight = len(symbols_out) + len(symbols_in)
+            for key in edge_weight.keys():
+                edge_weight[key] = edge_weight[key] / sum_weight * self.total_weight
 
             # first forward and backward push
             for e in edges:

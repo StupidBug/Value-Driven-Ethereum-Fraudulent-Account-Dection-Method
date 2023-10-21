@@ -68,6 +68,22 @@ class TokenPrice:
             return 0
 
         base_url = "https://api.syve.ai/v1/price/historical/tick"
+        if interval == 100:
+            params = {
+                "token_address": contract_address
+            }
+            url = QueryURLBuilder(base_url).get(params)
+            response = requests.request("GET", url)
+            data = list()
+            try:
+                data = json.loads(response.text)['data']
+            except KeyError:
+                print(params)
+                print(response.text)
+                return 0
+            if len(data) == 0:
+                return 0
+
         params = {
             "token_address": contract_address,
             "size": 10000,
@@ -87,6 +103,8 @@ class TokenPrice:
 
         valid_data = []
         for tx in data:
+            if tx['amount_token'] * tx['price_usd'] if tx['price_usd'] is not None else 0 < 10000:
+                continue
             if tx[price_type] is not None:
                 valid_data.append(tx)
 
@@ -151,5 +169,9 @@ class TokenPrice:
 
 
 if __name__ == "__main__":
-    print(TokenPrice("").get_price_at_specific_block(16772256, 1692343267))
-    print(TokenPrice("0xdAC17F958D2ee523a2206206994597C13D831ec7").get_price_at_nearest_block(1692343267,1558371616 ,100, 'price_eth'))
+    # BNB
+    print(TokenPrice("0xb8c77482e45f1f44de1745f52c74426c631bdd52").get_price_at_specific_block(10933525, 1601060173))
+    # imBTC
+    print(TokenPrice("0x3212b29e33587a00fb1c83346f5dbfa69a458923").get_price_at_specific_block(10933525, 1601060173))
+    # aBUSD
+    print(TokenPrice("0x6ee0f7bb50a54ab5253da0667b0dc2ee526c30a8").get_price_at_specific_block(10933525, 1601060173))

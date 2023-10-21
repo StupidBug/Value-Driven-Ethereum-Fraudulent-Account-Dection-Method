@@ -1531,7 +1531,7 @@ class TTRAlpha(TTR):
             yield from edges
 
     def get_adaptive_alpha(self, x, total):
-        return self.alpha * (1 - np.tanh(x/total))
+        return self.alpha * (1 - np.tanh(x/total-1/2))
 
     def _self_push(self, node, r: list, sum_r):
         sum_inc = 0

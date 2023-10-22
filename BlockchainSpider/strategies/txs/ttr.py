@@ -1,3 +1,4 @@
+import math
 import sys
 import time
 import scrapy
@@ -889,12 +890,12 @@ class TTRPrice(TTR):
         if node == self.source and node not in self._vis:
             self._vis.add(self.source)
 
-            # calc value of each symbol
-            symbols_out = set()
-            symbols_in = set()
-
+            in_sum, out_sum = dict(), dict()
             edge_weight = dict()
+            symbol_value = dict()
+            symbols = set()
             for e in edges:
+
                 token_contract = e.get('symbol').split('_')[1]
                 token_symbol = e.get('symbol').split('_')[0]
                 if token_symbol in ['WETH', 'native']:
@@ -911,38 +912,58 @@ class TTRPrice(TTR):
                     edge_weight[str(e)] = token_price * e.get('value')
                 else:
                     edge_weight[str(e)] = 0
+                symbol_value[e.get('symbol')] = symbol_value.get(e.get('symbol'), 0) + edge_weight[str(e)]
+                symbols.add(e.get('symbol'))
                 if e.get('to') == self.source:
-                    symbols_in.add(e.get('symbol'))
+                    in_sum[e.get('symbol')] = in_sum.get(e.get('symbol'), 0) + e.get('value', 0)
                 elif e.get('from') == self.source:
-                    symbols_out.add(e.get('symbol'))
-            sum_weight = sum(edge_weight.values())
-            for key in edge_weight.keys():
-                edge_weight[key] = edge_weight[key] / sum_weight * (len(symbols_out) + len(symbols_in))
+                    out_sum[e.get('symbol')] = out_sum.get(e.get('symbol'), 0) + e.get('value', 0)
+
+            for key in symbol_value.keys():
+                symbol_value[key] = math.log(symbol_value[key]+1)+1
+            _sum = sum(symbol_value.values())
+            for key in symbol_value.keys():
+                symbol_value[key] = symbol_value[key]/_sum * (len(out_sum)+len(in_sum))
+
             # first self push
-            self.p[self.source] = self.alpha * (len(symbols_out) + len(symbols_in))
+            self.p[self.source] = self.alpha * len(symbols)
 
             # first forward and backward push
             for e in edges:
-                if e.get('from') == self.source and edge_weight.get(str(e)) != 0:
+                if e.get('from') == self.source and out_sum.get(e.get('symbol'), 0) != 0:
                     if self.r.get(e.get('to')) is None:
                         self.r[e.get('to')] = list()
-                    value = (1 - self.alpha) * self.beta * edge_weight.get(str(e))
+                    value = (1 - self.alpha) * self.beta * e.get('value', 0) / out_sum[e.get('symbol')] * symbol_value[e.get('symbol')]
                     if value > 0:
                         self.r[e.get('to')].append(dict(
                             value=value,
                             timestamp=e.get('timeStamp'),
                             symbol=e.get('symbol')
                         ))
-                elif e.get('to') == self.source and edge_weight.get(str(e)) != 0:
+                elif e.get('to') == self.source and in_sum.get(e.get('symbol'), 0) != 0:
                     if self.r.get(e.get('from')) is None:
                         self.r[e.get('from')] = list()
-                    value = (1 - self.alpha) * (1 - self.beta) * edge_weight.get(str(e))
+                    value = (1 - self.alpha) * (1 - self.beta) * e.get('value', 0) / in_sum[e.get('symbol')] * symbol_value[e.get('symbol')]
                     if value > 0:
                         self.r[e.get('from')].append(dict(
                             value=value,
                             timestamp=e.get('timeStamp'),
                             symbol=e.get('symbol')
                         ))
+
+            for symbol in symbols:
+                if out_sum.get(symbol, 0) == 0:
+                    self.r[self.source].append(dict(
+                        value=(1 - self.alpha) * self.beta * symbol_value[symbol],
+                        timestamp=0,
+                        symbol=symbol
+                    ))
+                elif in_sum.get(symbol, 0) == 0:
+                    self.r[self.source].append(dict(
+                        value=(1 - self.alpha) * (1 - self.beta) * symbol_value[symbol],
+                        timestamp=sys.maxsize,
+                        symbol=symbol
+                    ))
             return
 
         # copy residual vector with sort and clear

@@ -1503,6 +1503,7 @@ class TTRAlpha(TTR):
                             value=value,
                             timestamp=e.get('timeStamp'),
                             symbol=e.get('symbol'),
+                            ratio=value/(len(out_sum) * self.beta * (1 - self.alpha))
                         ))
                 elif e.get('to') == self.source and in_sum.get(e.get('symbol'), 0) != 0:
                     if self.r.get(e.get('from')) is None:
@@ -1513,6 +1514,7 @@ class TTRAlpha(TTR):
                             value=value,
                             timestamp=e.get('timeStamp'),
                             symbol=e.get('symbol'),
+                            ratio=value/(len(in_sum) * (1 - self.beta) * (1 - self.alpha))
                         ))
 
             for symbol in symbols:
@@ -1521,12 +1523,14 @@ class TTRAlpha(TTR):
                         value=(1 - self.alpha) * self.beta * symbol_value[symbol],
                         timestamp=0,
                         symbol=symbol,
+                        ratio=symbol_value[symbol]/(len(out_sum))
                     ))
                 elif in_sum.get(symbol, 0) == 0:
                     self.r[self.source].append(dict(
                         value=(1 - self.alpha) * (1 - self.beta) * symbol_value[symbol],
                         timestamp=sys.maxsize,
                         symbol=symbol,
+                        ratio=symbol_value[symbol]/(len(in_sum))
                     ))
             return
 
@@ -1543,7 +1547,7 @@ class TTRAlpha(TTR):
         sum_r = 0
         for chip in r:
             sum_r += chip.get('value', 0)
-        self._self_push(node, r, sum_r)
+        self._self_push(node, r)
         self._forward_push(node, agg_es, r, sum_r)
         self._backward_push(node, agg_es, r, sum_r)
 
@@ -1566,15 +1570,17 @@ class TTRAlpha(TTR):
     def get_adaptive_alpha(self, x, total):
         return self.alpha * (1 - np.tanh(x/total-1/2))
 
-    def _self_push(self, node, r: list, sum_r):
+    def _self_push(self, node, r: list):
         sum_inc = 0
         for chip in r:
-            sum_inc += chip.get('value', 0) * self.get_adaptive_alpha(chip.get('value', 0), sum_r)
+            sum_inc += chip.get('value', 0) * self.alpha
         self.p[node] = self.p.get(node, 0) + sum_inc
 
     def _forward_push(self, node, aggregated_edges: list, r: list, sum_r):
         if len(r) == 0:
             return
+
+        sum_r *= self.beta * (1-self.alpha)
 
         # calc the weight sum after each chip
         j = len(aggregated_edges) - 1
@@ -1622,7 +1628,7 @@ class TTRAlpha(TTR):
             while j < len(r) and e.get_timestamp() > r[j].get('timestamp', 0):
                 c = r[j]
                 symbol = c.get('symbol')
-                inc_d = (1 - self.get_adaptive_alpha(c.get('value'), sum_r)) * c.get('value', 0) / W[str(c)] if W[str(c)] != 0 else 0
+                inc_d = (1 - self.get_adaptive_alpha(c.get('ratio'), 1)) * c.get('value', 0) / W[str(c)] if W[str(c)] != 0 else 0
                 d[symbol] = d.get(symbol, 0) + inc_d
                 j += 1
 
@@ -1647,24 +1653,28 @@ class TTRAlpha(TTR):
                         value=inc / len(distributing_profits),
                         symbol=dp.symbol,
                         timestamp=dp.timestamp,
+                        ratio=inc / len(distributing_profits)/sum_r
                     ))
         # recycle the residual without push
         cs = dict()
         while j < len(r):
             c = r[j]
             key = c.get('symbol'), c.get('timestamp')
-            cs[key] = cs.get(key, 0) + (1 - self.get_adaptive_alpha(c.get('value'), sum_r)) * self.beta * c.get('value', 0)
+            cs[key] = cs.get(key, 0) + (1 - self.get_adaptive_alpha(c.get('ratio'), 1)) * self.beta * c.get('value', 0)
             j += 1
         for key, value in cs.items():
             self.r[node].append(dict(
                 value=value,
                 symbol=key[0],
                 timestamp=key[1],
+                ratio=value/sum_r
             ))
 
     def _backward_push(self, node, aggregated_edges: list, r: list, sum_r):
         if len(r) == 0:
             return
+
+        sum_r *= (1 - self.alpha) * (1 - self.beta)
 
         # calc the weight sum before each chip
         j = 0
@@ -1712,7 +1722,7 @@ class TTRAlpha(TTR):
             while j >= 0 and e.get_timestamp() < r[j].get('timestamp', 0):
                 c = r[j]
                 symbol = c.get('symbol')
-                inc_d = (1 - self.get_adaptive_alpha(c.get('value'), sum_r)) * c.get('value', 0) / W[j] if W[j] != 0 else 0
+                inc_d = (1 - self.get_adaptive_alpha(c.get('ratio'), 1)) * c.get('value', 0) / W[j] if W[j] != 0 else 0
                 d[symbol] = d.get(symbol, 0) + inc_d
                 j -= 1
 
@@ -1737,6 +1747,7 @@ class TTRAlpha(TTR):
                         value=inc / len(distributing_profits),
                         symbol=dp.symbol,
                         timestamp=dp.timestamp,
+                        ratio=inc / len(distributing_profits)/sum_r
                     ))
 
         # recycle the residual without push
@@ -1744,13 +1755,14 @@ class TTRAlpha(TTR):
         while j >= 0:
             c = r[j]
             key = c.get('symbol'), c.get('timestamp')
-            cs[key] = cs.get(key, 0) + (1 - self.get_adaptive_alpha(c.get('value'), sum_r)) * (1 - self.beta) * c.get('value', 0)
+            cs[key] = cs.get(key, 0) + (1 - self.get_adaptive_alpha(c.get('ratio'), 1)) * (1 - self.beta) * c.get('value', 0)
             j -= 1
         for key, value in cs.items():
             self.r[node].append(dict(
                 value=value,
                 symbol=key[0],
                 timestamp=key[1],
+                ratio=value/sum_r
             ))
 
     def pop(self):

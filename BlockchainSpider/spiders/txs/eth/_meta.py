@@ -201,8 +201,7 @@ class TxsETHSpider(scrapy.Spider):
                     continue
                 if tx['from'] == '' or tx['to'] == '':
                     continue
-                if not (kwargs['startblock'] < int(tx['blockNumber']) < kwargs['endblock']):
-                    continue
+
                 if self.symbols and tx.get('tokenSymbol', 'native') not in self.symbols:
                     continue
 

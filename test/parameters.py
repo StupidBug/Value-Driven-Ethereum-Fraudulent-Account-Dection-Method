@@ -34,13 +34,13 @@ if __name__ == '__main__':
         net_cases[net].append(case)
 
     using_time = list()
-    epsilons = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005]
+    epsilons = [0.004, 0.003, 0.002]
     epsilons.reverse()
     for epsilon in epsilons:
         out_dir = os.path.join(args.out_dir, 'epsilon_%s' % str(epsilon))
         for net, cases in net_cases.items():
-            infos = list()
             for case in cases:
+                infos = list()
                 infos.append({
                     'source': case['source'][0]['address'],
                     'types': 'external,internal,erc20',
@@ -48,10 +48,12 @@ if __name__ == '__main__':
                     'out': out_dir,
                     'epsilon': epsilon,
                     'alpha': 0.15,
-                    'beta': 0.7
+                    'beta': 0.7,
+                    "strategy": "TTRAlpha"
                 })
 
-            with open('./tmp.json', 'w') as f:
-                json.dump(infos, f)
-            cmd = 'scrapy crawl txs.%s.ttr -a file=./tmp.json' % net
-            os.system(cmd)
+                with open('./tmp_ttr_alpha_{}.json'.format(epsilon), 'w') as f:
+                    json.dump(infos, f)
+                cmd = "nohup scrapy crawl txs.{}.ttr -a file=./tmp_ttr_alpha_{}.json > ttr_alpha_{}.log &".format(net, epsilon, epsilon)
+                os.system(cmd)
+                time.sleep(5)

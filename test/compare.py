@@ -18,7 +18,7 @@ parameters = {
     },
     'appr': {
         'core': 'appr',
-        'epsilon': 1e-3,
+        'epsilon': 5e-4,
         'alpha': 0.15
     },
     'ttr': {
@@ -31,6 +31,20 @@ parameters = {
     'ttr_time': {
         'core': 'ttr',
         'strategy': 'TTRTime',
+        'epsilon': 1e-3,
+        'alpha': 0.15,
+        'beta': 0.7,
+    },
+    'ttr_price': {
+        'core': 'ttr',
+        'strategy': 'TTRPrice',
+        'epsilon': 1e-3,
+        'alpha': 0.15,
+        'beta': 0.7,
+    },
+    'ttr_alpha': {
+        'core': 'ttr',
+        'strategy': 'TTRAlpha',
         'epsilon': 1e-3,
         'alpha': 0.15,
         'beta': 0.7,
@@ -93,13 +107,13 @@ if __name__ == '__main__':
                 'out': os.path.join(args.out_dir, 'raw'),
                 **params
             })
-        with open('./tmp.json', 'w') as f:
+        with open('./tmp_{}.json'.format(args.method), 'w') as f:
             json.dump(infos, f)
-        cmd = 'scrapy crawl txs.%s.%s -a file=./tmp.json' % (net, core)
+        cmd = 'scrapy crawl txs.%s.%s -a file=./tmp_%s.json' % (net, core, args.method)
         os.system(cmd)
 
     # save using time
-    with open('./using_time', 'w') as f:
+    with open('./using_time_{}'.format(args.method), 'w') as f:
         f.write(str(time.time() - start))
 
     # deduplicate for raw data

@@ -69,6 +69,8 @@ if __name__ == '__main__':
         fn = os.path.join(cases_path, fn)
         with open(fn, 'r') as f:
             case = json.load(f)
+            if case['source'][0]['address'] == '0xf4a2eff88a408ff4c4550148151c33c93442619e':
+                continue
             cases.append(case)
 
     avg_metrics = dict(

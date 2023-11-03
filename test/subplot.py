@@ -84,34 +84,33 @@ if __name__ == '__main__':
         _targets = [target['address'] for target in case['target']]
         targets[source] = set(_targets)
 
-    legends = list()
-    for legend, ranks in ranks.items():
-        legends.append(legend)
-        recalls = [0 for _ in range(args.k)]
-        target_cnt = {source: 0 for source in cases.keys()}
-        _recalls = {source: 0 for source in cases.keys()}
-        for i in range(len(recalls)):
-            for source, rank in ranks.items():
-                if len(rank) <= i:
+    fig, axes = plt.subplots(3, 4, figsize=(12, 8))
+    index = -1
+    for source, case in cases.items():
+        if index+1 == len(axes.ravel()):
+            continue
+        ax = axes.ravel()[index+1]
+        index += 1
+        for legend, rank in ranks.items():
+            recalls = [0 for _ in range(args.k)]
+            recall = 0
+            target_cnt = 0
+            for i in range(len(recalls)):
+                if len(rank[source]) <= i:
+                    recalls[i] = recall
                     continue
-                if rank[i]['node'] in targets[source]:
-                    target_cnt[source] = target_cnt.get(source, 0) + 1
-                _recalls[source] = target_cnt[source] / len(targets[source])
-            if i == 4999:
-                print(legend + "------------------------->")
-                print(sum(_recalls.values()) / len(cases))
-                count = 0
-                for source in ranks.keys():
-                    count += len(ranks[source])
-                print(count)
-            recalls[i] = sum(_recalls.values()) / len(cases)
-        plt.plot(recalls, linestyle=next(iter_linestyle), linewidth=3.0)
+                if rank[source][i]['node'] in targets[source]:
+                    target_cnt += 1
+                recall = target_cnt / len(targets[source])
+                recalls[i] = recall
+            ax.plot(recalls, linestyle=next(iter_linestyle), linewidth=3.0)
+            ax.legend(legends, prop={'size': 8})
+            ax.set_title(case['name'], fontsize=8)
+            # ax.xlabel('Top N', fontsize=20)
+            # ax.ylabel('Average Recall', fontsize=20)
 
-    plt.legend(legends, prop={'size': 16})
-    plt.xlabel('Top N', fontsize=20)
-    plt.ylabel('Average Recall', fontsize=20)
-    plt.tick_params(labelsize=17)
-    plt.grid()
+    # plt.tick_params(labelsize=17)
+    # plt.grid()
     plt.tight_layout()
     plt.show()
     plt.savefig(args.o)

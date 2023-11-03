@@ -119,3 +119,4 @@ if __name__ == '__main__':
     ax2.tick_params(labelsize=16)
     plt.tight_layout()
     plt.show()
+    plt.savefig("epsilons.png")

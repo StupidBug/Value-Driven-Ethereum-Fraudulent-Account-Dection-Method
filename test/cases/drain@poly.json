@@ -1,0 +1,74 @@
+{
+  "name": "CoinEX drain",
+  "net": "eth",
+  "blockAt": 17601251,
+  "reporter": "peck shield",
+  "url": "https://twitter.com/coinexcom/status/1701662057496731975",
+  "source": [
+    {
+      "address": "0xe0afadad1d93704761c8550f21a53de3468ba599",
+      "label": ""
+    }
+  ],
+  "target": [
+    {
+      "address": "0xc8ab4aa93949c377c32c069272425bd42738c42f",
+      "label": ""
+    },{
+      "address": "0xb69f28d84497107c2740471926cc258ba1b855e9",
+      "label": ""
+    },{
+      "address": "0x85ef23553eae46ee8759ee347d2b2fb1ee99bb60",
+      "label": ""
+    },{
+      "address": "0xbf6302cbb051e1579fe0ee116daf708739ca4ae6",
+      "label": ""
+    },{
+      "address": "0x21f1628f288fc54c61284cfdc8275daf7d057118",
+      "label": ""
+    },{
+      "address": "0x6893d0de6746ffae0cdc94916f98b03e566b67a5",
+      "label": ""
+    },{
+      "address": "0x88452d6fdfb804becea4a19a63f83441a1ceb3d1",
+      "label": ""
+    },{
+      "address": "0x23f4ca51aa75d9d3f28888748d514173394cc671",
+      "label": ""
+    },{
+      "address": "0x211ae110e2318c7cfa9391b390e5021709218d12",
+      "label": ""
+    },{
+      "address": "0x38ad785acf804c070a2dec73cfbf85f4c08fd913",
+      "label": ""
+    },{
+      "address": "0x9e98612e0abb4e2034d2de7f23cf56644e56f89b",
+      "label": ""
+    },{
+      "address": "0xf3066df075efbca47963e8e883e4055c02b0eb8a",
+      "label": ""
+    },{
+      "address": "0x8d62f78a18AB68c7808183609b25b29e476b3573",
+      "label": ""
+    },{
+      "address": "0xe5fa7e2aec791da10c5d5f397c4013e7c42ddab9",
+      "label": ""
+    },{
+      "address": "0xbcac1c15afea9cd5a4879c8a476bc6494d544eb6",
+      "label": ""
+    },{
+      "address": "0x5979fbfe759f77287b4f8129cd3949d6bd87a9f9",
+      "label": ""
+    },{
+      "address": "0x9d8195f3dcc357cd0a14de2609c9bb7e82831d66",
+      "label": ""
+    },{
+      "address": "0x8d72f9597571b6f1ba416beff61ef204732446a7",
+      "label": ""
+    }
+
+
+
+
+  ]
+}

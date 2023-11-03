@@ -48,8 +48,10 @@ class TokenPrice:
 
     def eth_price_at_specific_block(self, block_number, timestamp):
         contract_address = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-        response = self.price_usd_api(contract_address, block_number)
-        results: list = json.loads(response.text)['results']
+        #response = self.price_usd_api(contract_address, block_number)
+        #print(response)
+        #results: list = json.loads(response.text)['results']
+        results = []
         if len(results) == 0:
             usdt_to_eth = self.get_price_at_nearest_block(contract_address, timestamp, 100, 'price_eth')
             if usdt_to_eth == 0:
@@ -70,6 +72,7 @@ class TokenPrice:
         base_url = "https://api.syve.ai/v1/price/historical/tick"
         if interval == 100:
             params = {
+                "key": "l7cId0s9b6Icd6",
                 "token_address": contract_address
             }
             url = QueryURLBuilder(base_url).get(params)
@@ -82,9 +85,12 @@ class TokenPrice:
                 print(response.text)
                 return 0
             if len(data) == 0:
+                print(params)
+                print(response.text)
                 return 0
 
         params = {
+            "key": "l7cId0s9b6Icd6",
             "token_address": contract_address,
             "size": 10000,
             "from_timestamp": timestamp - interval // 2,
@@ -103,10 +109,11 @@ class TokenPrice:
 
         valid_data = []
         for tx in data:
-            if tx['amount_token'] * tx['price_usd'] if tx['price_usd'] is not None else 0 < 10000:
+            price_usd = tx['price_usd'] if tx['price_usd'] is not None else 0
+            if tx['amount_token'] * price_usd < 10000:
                 continue
             if tx[price_type] is not None:
-                valid_data.append(tx)
+                valid_data.append(tx) 
 
         if len(valid_data) == 0:
             return self.get_price_at_nearest_block(contract_address, timestamp, interval*2, price_type)
@@ -123,7 +130,7 @@ class TokenPrice:
 
     @staticmethod
     def price_usd_api(contract_address, block_number):
-        url = "https://api.syve.ai/v1/prices_usd"
+        url = "https://api.syve.ai/v1/prices_usd?key=l7cId0s9b6Icd6"
         payload = json.dumps({
             "filter": {
                 "type": "and",
@@ -160,7 +167,7 @@ class TokenPrice:
                         "value": 5
                     }
                 }
-            ]
+            ],
         })
         headers = {
             'Content-Type': 'application/json'

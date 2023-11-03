@@ -369,7 +369,7 @@ class TTRRedirect(TTR):
                 if e.get('from') == self.source and out_sum.get(e.get('symbol'), 0) != 0:
                     if self.r.get(e.get('to')) is None:
                         self.r[e.get('to')] = list()
-                    value = (1 - self.alpha) * self.beta * e.get('value', 0) / out_sum[e.get('symbol')]
+                    value = (1 - self.alpha) * self.beta * e.get('value', 0) / out_sum[e.get('symbol')] * 2
                     if value > 0:
                         self.r[e.get('to')].append(dict(
                             value=value,
@@ -379,7 +379,7 @@ class TTRRedirect(TTR):
                 elif e.get('to') == self.source and in_sum.get(e.get('symbol'), 0) != 0:
                     if self.r.get(e.get('from')) is None:
                         self.r[e.get('from')] = list()
-                    value = (1 - self.alpha) * (1 - self.beta) * e.get('value', 0) / in_sum[e.get('symbol')]
+                    value = (1 - self.alpha) * (1 - self.beta) * e.get('value', 0) / in_sum[e.get('symbol')] * 2
                     if value > 0:
                         self.r[e.get('from')].append(dict(
                             value=value,
@@ -390,13 +390,13 @@ class TTRRedirect(TTR):
             for symbol in symbols:
                 if out_sum.get(symbol, 0) == 0:
                     self.r[self.source].append(dict(
-                        value=(1 - self.alpha) * self.beta,
+                        value=(1 - self.alpha) * self.beta * 2,
                         timestamp=0,
                         symbol=symbol
                     ))
                 elif in_sum.get(symbol, 0) == 0:
                     self.r[self.source].append(dict(
-                        value=(1 - self.alpha) * (1 - self.beta),
+                        value=(1 - self.alpha) * (1 - self.beta) * 2,
                         timestamp=sys.maxsize,
                         symbol=symbol
                     ))
@@ -1189,7 +1189,8 @@ class TTRPrice(TTR):
         for _node, chips in self.r.items():
             sum_r = 0
             for chip in chips:
-                sum_r += chip.get('value', 0)
+                if chip.get('value', 0) > self.epsilon * self.alpha:
+                    sum_r += chip.get('value', 0)
             if sum_r > r:
                 node, r = _node, sum_r
 
@@ -1487,7 +1488,7 @@ class TTRAlpha(TTR):
                 symbol_value[key] = math.log(symbol_value[key]+1)+1
             _sum = sum(symbol_value.values())
             for key in symbol_value.keys():
-                symbol_value[key] = symbol_value[key]/_sum * (len(out_sum)+len(in_sum))
+                symbol_value[key] = symbol_value[key]/_sum * (len(symbols))
 
             # first self push
             self.p[self.source] = self.alpha * len(symbols)
@@ -1649,11 +1650,12 @@ class TTRAlpha(TTR):
                 for dp in distributing_profits:
                     if self.r.get(dp.address) is None:
                         self.r[dp.address] = list()
+                    value = inc / len(distributing_profits)
                     self.r[dp.address].append(dict(
-                        value=inc / len(distributing_profits),
+                        value=value,
                         symbol=dp.symbol,
                         timestamp=dp.timestamp,
-                        ratio=inc / len(distributing_profits)/sum_r
+                        ratio=value/sum_r
                     ))
         # recycle the residual without push
         cs = dict()
@@ -1743,11 +1745,12 @@ class TTRAlpha(TTR):
                 for dp in distributing_profits:
                     if self.r.get(dp.address) is None:
                         self.r[dp.address] = list()
+                    value = inc / len(distributing_profits)
                     self.r[dp.address].append(dict(
-                        value=inc / len(distributing_profits),
+                        value=value,
                         symbol=dp.symbol,
                         timestamp=dp.timestamp,
-                        ratio=inc / len(distributing_profits)/sum_r
+                        ratio=value/sum_r
                     ))
 
         # recycle the residual without push
